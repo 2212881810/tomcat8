@@ -29,6 +29,8 @@ import org.apache.catalina.mapper.Mapper;
  * completely independent of each other and share only the basic JVM facilities
  * and classes on the system class path.
  *
+ *  Service是一个或者多个Connector的集合
+ *
  * @author Craig R. McClanahan
  */
 public interface Service extends Lifecycle {

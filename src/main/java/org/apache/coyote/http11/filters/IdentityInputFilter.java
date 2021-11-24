@@ -29,7 +29,7 @@ import org.apache.tomcat.util.res.StringManager;
 
 /**
  * Identity input filter.
- *
+ * 处理带有content-length类型的请求
  * @author Remy Maucherat
  */
 public class IdentityInputFilter implements InputFilter, ApplicationBufferHandler {
@@ -134,13 +134,16 @@ public class IdentityInputFilter implements InputFilter, ApplicationBufferHandle
 
         int result = -1;
 
-        if (contentLength >= 0) {
-            if (remaining > 0) {
-                int nRead = buffer.doRead(handler);
+        if (contentLength >= 0) {  //请求体的长度
+            if (remaining > 0) {  //请求体中还剩余没有读取的长度，最开可能大于等于小于请求头中标识的请求体的长度contentLength
+                // 将请求体中的数据从buffer读取到handler中，返回实际读取的长度
+                int nRead = buffer.doRead(handler);  // 会调用Http11InputBuffer类中的doRead方法
                 if (nRead > remaining) {
                     // The chunk is longer than the number of bytes remaining
                     // in the body; changing the chunk length to the number
                     // of bytes remaining
+                    // 更新bb的limit位置，因为实际上会有这样一种情况：
+                    // 请求头中contentLength标识的长度大于请求体实际长度，tomcat实际上只会按照contentLength标识的长度读取请求体的数据
                     handler.getByteBuffer().limit(handler.getByteBuffer().position() + (int) remaining);
                     result = (int) remaining;
                 } else {

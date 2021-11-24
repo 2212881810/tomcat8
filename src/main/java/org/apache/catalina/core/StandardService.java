@@ -53,6 +53,9 @@ public class StandardService extends LifecycleMBeanBase implements Service {
     private static final Log log = LogFactory.getLog(StandardService.class);
     private static final StringManager sm = StringManager.getManager(StandardService.class);
 
+    public StandardService() {
+        System.out.println("创建Service成功!");
+    }
 
     // ----------------------------------------------------- Instance Variables
 
@@ -113,7 +116,7 @@ public class StandardService extends LifecycleMBeanBase implements Service {
         return engine;
     }
 
-
+    //此方法在解析server.xml配置文件时会进行调用，所以，会给Service绑定Engine
     @Override
     public void setContainer(Engine engine) {
         Engine oldEngine = this.engine;
@@ -122,6 +125,9 @@ public class StandardService extends LifecycleMBeanBase implements Service {
         }
         this.engine = engine;
         if (this.engine != null) {
+            //setContainer方法是给本Service实例绑定一个engine ,
+            // 但是本行代码又是给这个engine绑定了一个Service,
+            // 这样就实现对象关系之间互相绑定
             this.engine.setService(this);
         }
         if (getState().isAvailable()) {

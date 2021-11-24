@@ -146,7 +146,10 @@ public final class Bootstrap {
                 // no config file, default to this loader - we might be in a 'single' env.
                 commonLoader = this.getClass().getClassLoader();
             }
+            // 如果server类加器为null,直接返回commonLoader
             catalinaLoader = createClassLoader("server", commonLoader);
+            // 如果shared类加器为null,直接返回commonLoader
+            // 所以完全有可能server和shared loader都是commonLoader
             sharedLoader = createClassLoader("shared", commonLoader);
         } catch (Throwable t) {
             handleThrowable(t);
@@ -249,17 +252,24 @@ public final class Bootstrap {
      */
     public void init() throws Exception {
 
+        // 1. 初始化类加载器
         initClassLoaders();
 
+        // 2. 给当前线程设置类加载器，它设置的类加载器就是第1步初始化的类加载器
         Thread.currentThread().setContextClassLoader(catalinaLoader);
 
+        // 3. 安全相关，不重要
         SecurityClassLoad.securityClassLoad(catalinaLoader);
 
         // Load our startup class and call its process() method
         if (log.isDebugEnabled()) {
             log.debug("Loading startup class");
         }
+
+        // 4. 使用第1步初始化好的类加载器来加载Catalina这个类
+        // Catalina类是用来操作启动和关闭tomcat的shell脚本的
         Class<?> startupClass = catalinaLoader.loadClass("org.apache.catalina.startup.Catalina");
+        // 通过反射的方式创建Catalina实例
         Object startupInstance = startupClass.getConstructor().newInstance();
 
         // Set the shared extensions class loader
@@ -271,8 +281,8 @@ public final class Bootstrap {
         paramTypes[0] = Class.forName("java.lang.ClassLoader");
         Object paramValues[] = new Object[1];
         paramValues[0] = sharedLoader;
-        Method method =
-            startupInstance.getClass().getMethod(methodName, paramTypes);
+        Method method =startupInstance.getClass().getMethod(methodName, paramTypes);
+        //调用Catalina的setParentClassLoader方法，设置父加载器
         method.invoke(startupInstance, paramValues);
 
         catalinaDaemon = startupInstance;
@@ -302,6 +312,7 @@ public final class Bootstrap {
         if (log.isDebugEnabled()) {
             log.debug("Calling startup class " + method);
         }
+        // 调用Catalina类中load方法
         method.invoke(catalinaDaemon, param);
     }
 
@@ -442,6 +453,7 @@ public final class Bootstrap {
                 // Don't set daemon until init() has completed
                 Bootstrap bootstrap = new Bootstrap();
                 try {
+                    // 1.初始化类加载器 ，然后使用这个类加载器来加载Catalina
                     bootstrap.init();
                 } catch (Throwable t) {
                     handleThrowable(t);
@@ -458,6 +470,7 @@ public final class Bootstrap {
         }
 
         try {
+            // 执行启动或者关闭的命令
             String command = "start";
             if (args.length > 0) {
                 command = args[args.length - 1];
@@ -472,6 +485,7 @@ public final class Bootstrap {
                 daemon.stop();
             } else if (command.equals("start")) {
                 daemon.setAwait(true);
+                // 2. 开启一个Server实例，在这个过程中会解析tomcat的配置文件
                 daemon.load(args);
                 daemon.start();
                 if (null == daemon.getServer()) {

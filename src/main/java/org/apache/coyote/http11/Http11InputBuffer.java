@@ -362,7 +362,7 @@ public class Http11InputBuffer implements InputBuffer, ApplicationBufferHandler 
         }
         //
         // Skipping blank lines
-        //
+        // 跳过空白的行
         if (parsingRequestLinePhase < 2) {
             do {
                 // Read new bytes if needed
@@ -1189,7 +1189,7 @@ public class Http11InputBuffer implements InputBuffer, ApplicationBufferHandler 
 
         @Override
         public int doRead(ApplicationBufferHandler handler) throws IOException {
-
+            // byteBuffer.position表示开始读取的位置，limit表示最大可读取的位置
             if (byteBuffer.position() >= byteBuffer.limit()) {
                 // The application is reading the HTTP request body
                 boolean block = (request.getReadListener() == null);
@@ -1201,10 +1201,10 @@ public class Http11InputBuffer implements InputBuffer, ApplicationBufferHandler 
                     }
                 }
             }
-
+            // 剩余还可以读取的长度， 原则上应该等limit - position的值
             int length = byteBuffer.remaining();
-            handler.setByteBuffer(byteBuffer.duplicate());
-            byteBuffer.position(byteBuffer.limit());
+            handler.setByteBuffer(byteBuffer.duplicate());// byteBuffer.duplicate() 复制一个buffer, 然后用bb保存起来
+            byteBuffer.position(byteBuffer.limit());  // 更新position的位置
 
             return length;
         }

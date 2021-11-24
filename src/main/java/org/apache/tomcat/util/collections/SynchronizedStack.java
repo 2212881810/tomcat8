@@ -60,6 +60,7 @@ public class SynchronizedStack<T> {
         index++;
         if (index == size) {
             if (limit == -1 || size < limit) {
+                // 扩容
                 expand();
             } else {
                 index--;

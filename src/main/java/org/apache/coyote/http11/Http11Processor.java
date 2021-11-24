@@ -491,9 +491,13 @@ public class Http11Processor extends AbstractProcessor {
     public SocketState service(SocketWrapperBase<?> socketWrapper)
         throws IOException {
         RequestInfo rp = request.getRequestProcessor();
+
+
+        //由New阶段 转变成 开始解析 阶段
         rp.setStage(org.apache.coyote.Constants.STAGE_PARSE);
 
         // Setting up the I/O
+        // 给这个socket绑定inputBuffer 和outputBuffer，socket中的数据会读到这个buffer中
         setSocketWrapper(socketWrapper);
 
         // Flags
@@ -506,8 +510,9 @@ public class Http11Processor extends AbstractProcessor {
         while (!getErrorState().isError() && keepAlive && !isAsync() && upgradeToken == null &&
                 sendfileState == SendfileState.DONE && !endpoint.isPaused()) {
 
-            // Parsing the request header
+            // 解析请求头
             try {
+                // 解析请求行， 其实就是从inputBuffer中读数据
                 if (!inputBuffer.parseRequestLine(keptAlive)) {
                     if (inputBuffer.getParsingRequestLinePhase() == -1) {
                         return SocketState.UPGRADING;

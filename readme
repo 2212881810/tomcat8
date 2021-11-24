@@ -1,0 +1,57 @@
+1. 一个Server实例代表了整个Catalina的Servlet容器
+2. 一个Server实例可以关联多个Service, Server接口中提供了对Service的CRUD
+3. 一个Service是一组Connector的集合，在Service接口中提供了对Connector的CRUD，
+	同时，一个Servivce需要绑定一个Engine，所以在该Service组下的Connector的请求都是
+	通过此Engine来进行处理。
+
+4. Connector---->ProtocolHandler -----> Endpoint ----> Socket (Acceptor线程、Poller轮询线程、worker工作线程)
+
+5. Engine, 是Catalina继承体系中，最顶层的容器Container, 它代表整个Servlet Engine
+
+
+
+
+
+Engine的child: Host
+
+以下都是在Catalina类中的load方法中需要完成的事：
+
+
+创建Server成功！
+创建Service成功!
+创建Connector成功！
+	在创建Connector实例时，会创建protocolHandler--->会创建endpoint实例
+创建Engine成功！
+
+1. 调用Server的init方法
+2. 调用Service的init方法
+3. 调用Engine的init方法，在调用此方法时会创建一个startStopExecutor线程池
+4. 调用Connector的init方法
+	会调用protocolHandler的init方法
+		会调用endpoint的init方法
+
+endpoint的init方法要干的事：
+1. 创建一个ServerSocketChannel实例
+    ServerSocketChannelServerSocketChannel serverSock = ServerSocketChannel.open();
+2. 给ServerSocket绑定监听端口和backlog
+	 serverSock.socket().bind(addr, getAcceptCount());
+3. 设置非阻塞
+	   serverSock.configureBlocking(true);
+4. 创建一个共享的Selector实例
+	 SHARED_SELECTOR = Selector.open();
+
+5.创建一个NioBlockingSelector实例，它其实是对NIO中Selector进行了功能增强
+	// selector: nio中原生的selector
+	public void open(Selector selector) {
+        sharedSelector = selector;
+		// 开启了一个轮询线程
+        poller = new BlockPoller();
+        poller.selector = sharedSelector;
+        poller.setDaemon(true);
+        poller.setName("NioBlockingSelector.BlockPoller-"+(threadCounter.getAndIncrement()));
+        //启动线程
+		poller.start();
+    }
+
+以下都是在Catalina类中的start方法中需要完成的事：
+1.

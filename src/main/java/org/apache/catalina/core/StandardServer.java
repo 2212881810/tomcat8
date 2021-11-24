@@ -71,8 +71,8 @@ public final class StandardServer extends LifecycleMBeanBase implements Server {
      * Construct a default instance of this class.
      */
     public StandardServer() {
-
         super();
+        System.out.println("创建Server成功！");
 
         globalNamingResources = new NamingResourcesImpl();
         globalNamingResources.setContainer(this);
@@ -128,6 +128,7 @@ public final class StandardServer extends LifecycleMBeanBase implements Server {
 
     /**
      * The set of Services associated with this Server.
+     * 与此Server相关联的Service实例集合
      */
     private Service services[] = new Service[0];
     private final Object servicesLock = new Object();
@@ -336,7 +337,7 @@ public final class StandardServer extends LifecycleMBeanBase implements Server {
      */
     @Override
     public void addService(Service service) {
-
+        //给service设置server
         service.setServer(this);
 
         synchronized (servicesLock) {
@@ -840,6 +841,7 @@ public final class StandardServer extends LifecycleMBeanBase implements Server {
         }
         // Initialize our defined Services
         for (Service service : services) {
+            System.out.println("调用Service【"+ service+"】的init方法");
             service.init();
         }
     }

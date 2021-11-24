@@ -96,6 +96,7 @@ public class StandardThreadExecutor extends LifecycleMBeanBase
     // ---------------------------------------------- Constructors
     public StandardThreadExecutor() {
         //empty constructor for the digester
+        System.out.println("创建StandardThreadExecutor成功！");
     }
 
 

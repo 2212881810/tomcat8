@@ -542,7 +542,7 @@ public class Catalina {
         // Before digester - it may be needed
         initNaming();
 
-        // Create and execute our Digester
+        // Create and execute our Digester  创建Digester实例，配置server.xml中节点的父子关系
         Digester digester = createStartDigester();
 
         InputSource inputSource = null;
@@ -550,8 +550,9 @@ public class Catalina {
         File file = null;
         try {
             try {
-                file = configFile();
+                file = configFile();// tomcat的配置文件server.xml
                 inputStream = new FileInputStream(file);
+                // 使用rt库中sax工具类来解析xml文件
                 inputSource = new InputSource(file.toURI().toURL().toString());
             } catch (Exception e) {
                 if (log.isDebugEnabled()) {
@@ -636,6 +637,7 @@ public class Catalina {
 
         // Start the new server
         try {
+            // 调用Server的init方法
             getServer().init();
         } catch (LifecycleException e) {
             if (Boolean.getBoolean("org.apache.catalina.startup.EXIT_ON_INIT_FAILURE")) {
