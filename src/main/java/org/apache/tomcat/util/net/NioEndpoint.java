@@ -293,7 +293,7 @@ public class NioEndpoint extends AbstractJsseEndpoint<NioChannel> {
             if (getExecutor() == null) {
                 createExecutor();
             }
-
+            // 最大连接10000，自己实现了一个连接门闩Latch
             initializeConnectionLatch();
 
             // Start poller threads

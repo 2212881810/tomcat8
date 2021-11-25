@@ -953,7 +953,9 @@ public abstract class ContainerBase extends LifecycleMBeanBase implements Contai
             ((Lifecycle) realm).start();
         }
 
-        // Start our child containers, if any
+        // Start our child containers, if any,
+        // 如果当前容器是Engine,那么child就是Host(StandardHost)
+        // 然后就会通过startStopExecutor线程异步的去调用StandardHost的start()方法
         Container children[] = findChildren();
         List<Future<Void>> results = new ArrayList<>();
         for (Container child : children) {

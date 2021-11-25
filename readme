@@ -1,7 +1,7 @@
 1. 一个Server实例代表了整个Catalina的Servlet容器
 2. 一个Server实例可以关联多个Service, Server接口中提供了对Service的CRUD
 3. 一个Service是一组Connector的集合，在Service接口中提供了对Connector的CRUD，
-	同时，一个Servivce需要绑定一个Engine，所以在该Service组下的Connector的请求都是
+	同时，一个Service需要绑定一个Engine，所以在该Service组下的Connector的请求都是
 	通过此Engine来进行处理。
 
 4. Connector---->ProtocolHandler -----> Endpoint ----> Socket (Acceptor线程、Poller轮询线程、worker工作线程)
@@ -16,12 +16,12 @@ Engine的child: Host
 
 以下都是在Catalina类中的load方法中需要完成的事：
 
-
-创建Server成功！
-创建Service成功!
-创建Connector成功！
+创建顺序：
+1. 创建Server成功！
+2. 创建Service成功!
+3. 创建Connector成功！
 	在创建Connector实例时，会创建protocolHandler--->会创建endpoint实例
-创建Engine成功！
+4. 创建Engine成功！
 
 1. 调用Server的init方法
 2. 调用Service的init方法
@@ -31,16 +31,16 @@ Engine的child: Host
 		会调用endpoint的init方法
 
 endpoint的init方法要干的事：
-1. 创建一个ServerSocketChannel实例
+4.1. 创建一个ServerSocketChannel实例
     ServerSocketChannelServerSocketChannel serverSock = ServerSocketChannel.open();
-2. 给ServerSocket绑定监听端口和backlog
+4.2. 给ServerSocket绑定监听端口和backlog
 	 serverSock.socket().bind(addr, getAcceptCount());
-3. 设置非阻塞
+4.3. 设置非阻塞
 	   serverSock.configureBlocking(true);
-4. 创建一个共享的Selector实例
+4.4. 创建一个共享的Selector实例
 	 SHARED_SELECTOR = Selector.open();
 
-5.创建一个NioBlockingSelector实例，它其实是对NIO中Selector进行了功能增强
+4.5.创建一个NioBlockingSelector实例，它其实是对NIO中Selector进行了功能增强
 	// selector: nio中原生的selector
 	public void open(Selector selector) {
         sharedSelector = selector;
@@ -54,4 +54,36 @@ endpoint的init方法要干的事：
     }
 
 以下都是在Catalina类中的start方法中需要完成的事：
-1.
+
+1. 调用server.start()，真实情况是调用父类LifecycleBase类中的start()方法，
+	然后调用抽象方法startInternal方法，去执行子类的逻辑，
+	此处就是调用StandardServer#startInternal()
+2. 调用service.start()方法，然后同样是调用父类LifecycleBase类中的start()方法，
+	再通过startInternal方法回调子类StandardService中的startInternal()方法
+3. 调用engine.start()，因为Engine是Container的子类，在调用StandardEngine类中的startInternal()方法时
+	会调用父类ContainerBase类中提供的startInternal方法
+	3.1 Realm组件启动，即是调用它的start()方法，不重要，跳过
+	3.2 Host组件启动，即是调用StandardHost的start()方法，此方法内部处理pipeline和Value（感觉不重要）
+
+4. 调用pipeline.start(), StandardPipeline, 会调用它的init方法，再调用startInternal()
+	4.1 StandardEngineValue.start()
+
+5. 启动了一个线程去执行ContainerBackgroundProcessor 周期性的回调工作
+	Container.backgroundProcess()
+
+6. 调用executor.start()方法，只是executor为null,没有调用，为啥？
+7. 调用connector.start()方法---> protocolHandler.start()---->endpoint.start()，很重要了！
+
+	7.1 endpoint.start()方法，具体实现类回调NioEndpoint.startInternal(),在此方法内部会
+		做以下几件事：
+		（1）创建一个工作线程池，核心线程数10个，最大线程数200，无界队列
+		（2）创建两个轮询器线程Poller，最多两个线程
+		（3）创建一个Acceptor线程
+	7.2 启动一个异步超时线程AsyncTimeout
+
+8. 开启CatalinaShutdownHook线程，并注册
+	Runtime.getRuntime().addShutdownHook(shutdownHook);
+	调用stop方法，关闭tomcat,最终还是会调到Lifecycle的stop的方法；
+
+
+	Engine下面有两个子组件： Realm 和 Host

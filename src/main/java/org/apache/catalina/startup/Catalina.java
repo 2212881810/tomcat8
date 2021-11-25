@@ -721,6 +721,7 @@ public class Catalina {
         }
 
         if (await) {
+            // 阻塞的方式，调用8005端口
             await();
             stop();
         }
