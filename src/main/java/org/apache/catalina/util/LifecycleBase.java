@@ -129,13 +129,17 @@ public abstract class LifecycleBase implements Lifecycle {
 
     @Override
     public final synchronized void init() throws LifecycleException {
+        // 1. 如果当前组件不是NEW状态 ，抛出异常
         if (!state.equals(LifecycleState.NEW)) {
             invalidTransition(Lifecycle.BEFORE_INIT_EVENT);
         }
 
         try {
+            // 2, 组件状态扭转,转化成INITIALIZING，并触发相应的生命周期事件
             setStateInternal(LifecycleState.INITIALIZING, null, false);
+            // 3, 调用抽象方法initInternal,具体功能由各个组件去完成
             initInternal();
+            // 4, 组件状态扭转，转化成INITIALIZING，并触发相应的生命周期事件
             setStateInternal(LifecycleState.INITIALIZED, null, false);
         } catch (Throwable t) {
             handleSubClassException(t, "lifecycleBase.initFail", toString());
@@ -158,6 +162,7 @@ public abstract class LifecycleBase implements Lifecycle {
     @Override
     public final synchronized void start() throws LifecycleException {
 
+        // 1. 组件的状态检测，如果状态不正确，直接抛异常
         if (LifecycleState.STARTING_PREP.equals(state) || LifecycleState.STARTING.equals(state) ||
                 LifecycleState.STARTED.equals(state)) {
 
@@ -171,9 +176,11 @@ public abstract class LifecycleBase implements Lifecycle {
             return;
         }
 
+        // 如果当前组件的状态是NEW,先执行init方法，完成组件的初始化操作
         if (state.equals(LifecycleState.NEW)) {
             init();
         } else if (state.equals(LifecycleState.FAILED)) {
+            // 如果组件此时的状态是FAILED,执行stop操作
             stop();
         } else if (!state.equals(LifecycleState.INITIALIZED) &&
                 !state.equals(LifecycleState.STOPPED)) {
@@ -181,7 +188,10 @@ public abstract class LifecycleBase implements Lifecycle {
         }
 
         try {
+            // 2, 组件状态扭转,转化成STARTING_PREP，并触发相应的生命周期事件
             setStateInternal(LifecycleState.STARTING_PREP, null, false);
+
+            // 3, 调用抽象方法startInternal,具体功能由各个组件去完成
             startInternal();
             if (state.equals(LifecycleState.FAILED)) {
                 // This is a 'controlled' failure. The component put itself into the

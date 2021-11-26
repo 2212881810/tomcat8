@@ -159,6 +159,7 @@ public class StandardContext extends ContainerBase
     public StandardContext() {
 
         super();
+        System.out.println("创建Context成功！");
         pipeline.setBasic(new StandardContextValve());
         broadcaster = new NotificationBroadcasterSupport();
         // Set defaults

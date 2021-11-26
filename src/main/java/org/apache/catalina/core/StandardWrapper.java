@@ -88,6 +88,7 @@ public class StandardWrapper extends ContainerBase
     public StandardWrapper() {
 
         super();
+        System.out.println("创建Wrapper成功！");
         swValve=new StandardWrapperValve();
         pipeline.setBasic(swValve);
         broadcaster = new NotificationBroadcasterSupport();

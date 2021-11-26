@@ -34,13 +34,11 @@ import org.apache.tomcat.util.res.StringManager;
  * 该类实现了Tomcat组件注册到JMX和从JMX中解除注册的功能;
  * 初始化时注册， 销毁时解除注册
  */
-public abstract class LifecycleMBeanBase extends LifecycleBase
-        implements JmxEnabled {
+public abstract class LifecycleMBeanBase extends LifecycleBase implements JmxEnabled {
 
     private static final Log log = LogFactory.getLog(LifecycleMBeanBase.class);
 
-    private static final StringManager sm =
-        StringManager.getManager("org.apache.catalina.util");
+    private static final StringManager sm = StringManager.getManager("org.apache.catalina.util");
 
 
     /* Cache components of the MBean registration. */
@@ -59,9 +57,9 @@ public abstract class LifecycleMBeanBase extends LifecycleBase
         // preRegister().
         if (oname == null) {
 
-            // 初始化MBeanServer
+            // 初始化一个MBeanServer对象
             mserver = Registry.getRegistry(null, null).getMBeanServer();
-
+            // 将组件this注册到MBeanServer中去
             oname = register(this, getObjectNameKeyProperties());
         }
     }
@@ -111,7 +109,7 @@ public abstract class LifecycleMBeanBase extends LifecycleBase
      * Method implemented by sub-classes to identify the domain in which MBeans
      * should be registered.
      *
-     * @return  The name of the domain to use to register MBeans.
+     * @return The name of the domain to use to register MBeans.
      */
     protected abstract String getDomainInternal();
 
@@ -129,8 +127,8 @@ public abstract class LifecycleMBeanBase extends LifecycleBase
      * Allow sub-classes to specify the key properties component of the
      * {@link ObjectName} that will be used to register this component.
      *
-     * @return  The string representation of the key properties component of the
-     *          desired {@link ObjectName}
+     * @return The string representation of the key properties component of the
+     * desired {@link ObjectName}
      */
     protected abstract String getObjectNameKeyProperties();
 
@@ -142,15 +140,13 @@ public abstract class LifecycleMBeanBase extends LifecycleBase
      * Note: This method should only be used once {@link #initInternal()} has
      * been called and before {@link #destroyInternal()} has been called.
      *
-     * @param obj                       The object the register
-     * @param objectNameKeyProperties   The key properties component of the
-     *                                  object name to use to register the
-     *                                  object
-     *
-     * @return  The name used to register the object
+     * @param obj                     The object the register
+     * @param objectNameKeyProperties The key properties component of the
+     *                                object name to use to register the
+     *                                object
+     * @return The name used to register the object
      */
-    protected final ObjectName register(Object obj,
-            String objectNameKeyProperties) {
+    protected final ObjectName register(Object obj, String objectNameKeyProperties) {
 
         // Construct an object name with the right domain
         StringBuilder name = new StringBuilder(getDomain());
@@ -177,7 +173,7 @@ public abstract class LifecycleMBeanBase extends LifecycleBase
      * Note: This method should only be used once {@link #initInternal()} has
      * been called and before {@link #destroyInternal()} has been called.
      *
-     * @param on    The name of the component to unregister
+     * @param on The name of the component to unregister
      */
     protected final void unregister(ObjectName on) {
 
@@ -235,8 +231,7 @@ public abstract class LifecycleMBeanBase extends LifecycleBase
      * {@link MBeanServer} and/or {@link ObjectName}.
      */
     @Override
-    public final ObjectName preRegister(MBeanServer server, ObjectName name)
-            throws Exception {
+    public final ObjectName preRegister(MBeanServer server, ObjectName name) throws Exception {
 
         this.mserver = server;
         this.oname = name;

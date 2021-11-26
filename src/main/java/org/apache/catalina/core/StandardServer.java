@@ -842,7 +842,7 @@ public final class StandardServer extends LifecycleMBeanBase implements Server {
         }
         // Initialize our defined Services
         for (Service service : services) {
-            System.out.println("调用Service【"+ service+"】的init方法");
+            //System.out.println("调用Service【"+ service+"】的init方法");
             service.init();
         }
     }

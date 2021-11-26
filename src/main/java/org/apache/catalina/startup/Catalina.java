@@ -529,7 +529,7 @@ public class Catalina {
      * Start a new server instance.
      */
     public void load() {
-
+        System.out.println("执行catalina的load....");
         if (loaded) {
             return;
         }
@@ -673,7 +673,7 @@ public class Catalina {
      * Start a new server instance.
      */
     public void start() {
-
+        System.out.println("执行catalina的start....");
         if (getServer() == null) {
             load();
         }

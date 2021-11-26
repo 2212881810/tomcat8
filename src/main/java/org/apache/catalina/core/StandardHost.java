@@ -67,6 +67,7 @@ public class StandardHost extends ContainerBase implements Host {
     public StandardHost() {
 
         super();
+        System.out.println("创建Host成功！");
         pipeline.setBasic(new StandardHostValve());
 
     }

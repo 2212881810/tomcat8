@@ -22,6 +22,7 @@ Engine的child: Host
 3. 创建Connector成功！
 	在创建Connector实例时，会创建protocolHandler--->会创建endpoint实例
 4. 创建Engine成功！
+5. 创建Host成功！
 
 1. 调用Server的init方法
 2. 调用Service的init方法
@@ -60,13 +61,18 @@ endpoint的init方法要干的事：
 	此处就是调用StandardServer#startInternal()
 2. 调用service.start()方法，然后同样是调用父类LifecycleBase类中的start()方法，
 	再通过startInternal方法回调子类StandardService中的startInternal()方法
-3. 调用engine.start()，因为Engine是Container的子类，在调用StandardEngine类中的startInternal()方法时
+3. 调用engine.start()，因为Engine是Container的子类，
+	在调用StandardEngine类中的startInternal()方法时
 	会调用父类ContainerBase类中提供的startInternal方法
 	3.1 Realm组件启动，即是调用它的start()方法，不重要，跳过
-	3.2 Host组件启动，即是调用StandardHost的start()方法，此方法内部处理pipeline和Value（感觉不重要）
+	3.2 Host组件启动，即是调用StandardHost的start()方法 （重要：会进行项目部署）
+		3.2.1 调用StandardHost.start()即是调用父类LifecycleBase.start()方法
 
-4. 调用pipeline.start(), StandardPipeline, 会调用它的init方法，再调用startInternal()
-	4.1 StandardEngineValue.start()
+
+
+
+4. 调用pipeline.start(), StardardPipeline, 会调用它的init方法，再调用startInternal()
+	4.1 StardardEngineValue.start()
 
 5. 启动了一个线程去执行ContainerBackgroundProcessor 周期性的回调工作
 	Container.backgroundProcess()
@@ -87,3 +93,49 @@ endpoint的init方法要干的事：
 
 
 	Engine下面有两个子组件： Realm 和 Host
+		Host的子组件： Context
+
+通过生命周期监听器HostConfig来完成项目的部署，执行流程：
+1. 调用HostConfig.lifecycleEvent(LifecycleEvent event)方法在它的start事件中启动
+2. 调用deployApps()方法，在该方法内部实现tomcat的3种部署方式，下面重点记录war包部署的方式
+3. 调用deployWARs(File appBase, String[] files)方式，方法内部硬编码过滤出.war结束的文件
+	file.toLowerCase(Locale.ENGLISH).endsWith(".war")
+4. 通过 startStopExecutor 线程池异步去部署war包，调用deployWar方法
+5. 通过反射创建Context实例
+	Context context = (Context) Class.forName(contextClass).getConstructor().newInstance();
+6. 调用Conext的start方法
+
+
+
+Host.addChild(context)---> addChildInternal(context)
+--> context.start()---->Lifecycle.start()----> abs startInternal()
+---> StandardContext.startInternal()--->ContextConfig.lifecycleEvent(event)
+---->  configureStart() --->    Wrapper wrapper = context.createWrapper();
+
+
+
+Tomcat的四大容器
+
+Engine： Catalina的整个engine,包含Host或者Context
+Host:    多个Context组成的虚拟Host
+Context: 一个ServletContext(web程序),这个web程序包含一个或多个Wrapper
+Wrapper：一个独立的servlet，如果实现了SingleThreadModel，可以表示多个Servlet实例
+
+Engine和Host是在Catalina的load方法中完成实例化的
+Context和Wrapper是在Catalina的start方法中完成实例化的
+
+
+Container.java主要api如下：
+
+1. addChild(Container child);
+2. Container findChild(String name);
+3. addContainerListener(ContainerListener listener);
+
+Lifecycle.java主要api如下：
+1. init()
+2. start()
+3. stop()
+4. destroy()
+5. addLifecycleListener(LifecycleListener listener);
+6. LifecycleListener[] findLifecycleListeners();
+Container.java 继承了Lifecycle.java接口
