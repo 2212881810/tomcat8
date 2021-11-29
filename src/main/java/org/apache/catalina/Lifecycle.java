@@ -82,6 +82,8 @@ package org.apache.catalina;
  * <p>
  * <p>
  * 定义了Tomcat中所有组件的生命周期函数 ，定义该接口，主要是为了统一管理组件的生命周期
+ * 
+ *  共计定义了13种事件类型
  */
 public interface Lifecycle {
 

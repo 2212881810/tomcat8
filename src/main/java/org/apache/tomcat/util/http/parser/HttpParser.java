@@ -34,7 +34,7 @@ import org.apache.tomcat.util.res.StringManager;
  * It provides tolerant (where safe to do so) parsing of HTTP header values
  * assuming that wrapped header lines have already been unwrapped. (The Tomcat
  * header processing code does the unwrapping.)
- *
+ * 用于解析http请求头的工具类，可以这样理解吧
  */
 public class HttpParser {
 

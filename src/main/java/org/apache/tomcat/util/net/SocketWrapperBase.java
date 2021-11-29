@@ -35,6 +35,11 @@ import org.apache.juli.logging.LogFactory;
 import org.apache.tomcat.util.ExceptionUtils;
 import org.apache.tomcat.util.res.StringManager;
 
+/**
+ * 核心类，完成了socket jvm层面读写缓冲区数据读写操作，
+ * socketBufferHandler :包装了jvm层面读写缓冲区
+ * @param <E>
+ */
 public abstract class SocketWrapperBase<E> {
 
     private static final Log log = LogFactory.getLog(SocketWrapperBase.class);
@@ -75,6 +80,7 @@ public abstract class SocketWrapperBase<E> {
 
     /**
      * The buffers used for communicating with the socket.
+     * 里面有两个缓冲区
      */
     protected volatile SocketBufferHandler socketBufferHandler = null;
 

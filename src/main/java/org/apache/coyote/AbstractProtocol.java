@@ -46,6 +46,11 @@ import org.apache.tomcat.util.net.SocketEvent;
 import org.apache.tomcat.util.net.SocketWrapperBase;
 import org.apache.tomcat.util.res.StringManager;
 
+
+/**
+ * 协议处理器的模板方法
+ */
+
 public abstract class AbstractProtocol<S> implements ProtocolHandler,
         MBeanRegistration {
 
@@ -90,7 +95,9 @@ public abstract class AbstractProtocol<S> implements ProtocolHandler,
      */
     private AsyncTimeout asyncTimeout = null;
 
-
+    /**
+     *  必传endpoint , 而且协议处理器的实现都是靠endpoint来实现的
+     */
     public AbstractProtocol(AbstractEndpoint<S> endpoint) {
         this.endpoint = endpoint;
         setSoLinger(Constants.DEFAULT_CONNECTION_LINGER);
@@ -490,6 +497,11 @@ public abstract class AbstractProtocol<S> implements ProtocolHandler,
      * implementation.
      *
      * @return A fully configured Processor instance that is ready to use
+     *
+     *
+     * Processor:处理器，用它来处理的socket套接字的
+     *
+     *
      */
     protected abstract Processor createProcessor();
 
@@ -609,7 +621,8 @@ public abstract class AbstractProtocol<S> implements ProtocolHandler,
         endpoint.start();
 
         // Start timeout thread
-        // 给 Processor 设置超时时间的
+        // 检测异步超时的线程，
+        // servlet3.0之后，推出了异步处理器操作，这个线程就是用于检测异步操作的连接是否超时用的
         asyncTimeout = new AsyncTimeout();
         Thread timeoutThread = new Thread(asyncTimeout, getNameInternal() + "-AsyncTimeout");
         int priority = endpoint.getThreadPriority();
@@ -814,8 +827,8 @@ public abstract class AbstractProtocol<S> implements ProtocolHandler,
                     }
                 }
                 if (processor == null) {
-                    processor = getProtocol().createProcessor();
-                    register(processor);
+                    processor = getProtocol().createProcessor();  // 创建一个processor处理器
+                    register(processor);  // 将processor实例注册到MbeanServer中去
                     if (getLog().isDebugEnabled()) {
                         getLog().debug(sm.getString("abstractConnectionHandler.processorCreate", processor));
                     }
@@ -823,12 +836,13 @@ public abstract class AbstractProtocol<S> implements ProtocolHandler,
 
                 processor.setSslSupport(
                         wrapper.getSslSupport(getProtocol().getClientCertProvider()));
-
-                // Associate the processor with the connection
+                // org.apache.tomcat.util.net.NioChannel@740e99ab:java.nio.channels.SocketChannel[connected local=/0:0:0:0:0:0:0:1:8080 remote=/0:0:0:0:0:0:0:1:56312]
+                // Associate the processor with the connection  建立起连接和processor之间的关系
                 connections.put(socket, processor);
 
                 SocketState state = SocketState.CLOSED;
                 do {
+                    // 调用processor的process方法处理连接请求
                     state = processor.process(wrapper, status);
 
                     if (state == SocketState.UPGRADING) {
@@ -1199,6 +1213,7 @@ public abstract class AbstractProtocol<S> implements ProtocolHandler,
                 }
                 long now = System.currentTimeMillis();
                 for (Processor processor : waitingProcessors) {
+                    //
                    processor.timeoutAsync(now);
                 }
 

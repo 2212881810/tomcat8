@@ -23,11 +23,20 @@ import org.apache.tomcat.util.buf.ByteBufferUtils;
 public class SocketBufferHandler {
 
     private volatile boolean readBufferConfiguredForWrite = true;
+    /**
+     * 8192
+     */
     private volatile ByteBuffer readBuffer;
 
     private volatile boolean writeBufferConfiguredForWrite = true;
+    /**
+     * 8192
+     */
     private volatile ByteBuffer writeBuffer;
 
+    /**
+     * false
+     */
     private final boolean direct;
 
     public SocketBufferHandler(int readBufferSize, int writeBufferSize,

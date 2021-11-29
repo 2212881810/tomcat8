@@ -77,6 +77,10 @@ public class Connector extends LifecycleMBeanBase {
     }
 
 
+    /**
+     * 什么是协议? 协议就是定了数据传输格式的规范
+     * @param protocol
+     */
     public Connector(String protocol) {
         // 给connector绑定相应的协议处理器(高版本一般都是Http11NioProtocol)
         //   Http11NioProtocol 的无参构造器会绑定一个 NioEndpoint ,Endpoint管理了socket相关的东西
@@ -84,6 +88,7 @@ public class Connector extends LifecycleMBeanBase {
         System.out.println("创建Connector成功！");
         setProtocol(protocol);
         // Instantiate protocol handler
+        // 处理协议规则的处理器--------------> 定义了一种协议,所以需要一个协议处理器来处理这种协议
         ProtocolHandler p = null;
         try {
             // 通过反射技术创建一个协议处理器实例

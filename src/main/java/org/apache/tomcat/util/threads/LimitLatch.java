@@ -27,19 +27,35 @@ import org.apache.juli.logging.LogFactory;
  * Shared latch that allows the latch to be acquired a limited number of times
  * after which all subsequent requests to acquire the latch will be placed in a
  * FIFO queue until one of the shares is returned.
+ * <p>
+ * <p>
+ * CountDownLatch:只可以减，不可能增;
+ * LimitLatch : 即可以增，也可以减！！！！！！！！！！！
  */
 public class LimitLatch {
 
     private static final Log log = LogFactory.getLog(LimitLatch.class);
 
+
+    /**
+     * 使用的是共享锁；
+     * 因为如果是使用互斥锁，那么永远都能是一个线程去获取锁；
+     * 而使用共享锁，则可以同时唤醒多个线程去获取连接
+     */
     private class Sync extends AbstractQueuedSynchronizer {
         private static final long serialVersionUID = 1L;
 
         public Sync() {
         }
 
+
+        /**
+         * return 1 表示获取锁成功
+         * return -1 :表示获取锁失败
+         */
         @Override
         protected int tryAcquireShared(int ignored) {
+            //count值用于记录当前有多个连接
             long newCount = count.incrementAndGet();
             if (!released && newCount > limit) {
                 // Limit exceeded
@@ -50,6 +66,11 @@ public class LimitLatch {
             }
         }
 
+        /**
+         * 返回true ,表示释放锁成功
+         * @param arg
+         * @return
+         */
         @Override
         protected boolean tryReleaseShared(int arg) {
             count.decrementAndGet();
@@ -59,11 +80,17 @@ public class LimitLatch {
 
     private final Sync sync;
     private final AtomicLong count;
+
+    /**
+     * 当连接超过limit时，全都阻塞等待；
+     * 当
+     */
     private volatile long limit;
     private volatile boolean released = false;
 
     /**
      * Instantiates a LimitLatch object with an initial limit.
+     *
      * @param limit - maximum number of concurrent acquisitions of this latch
      */
     public LimitLatch(long limit) {
@@ -74,6 +101,7 @@ public class LimitLatch {
 
     /**
      * Returns the current count for the latch
+     *
      * @return the current count for latch
      */
     public long getCount() {
@@ -82,6 +110,7 @@ public class LimitLatch {
 
     /**
      * Obtain the current limit.
+     *
      * @return the limit
      */
     public long getLimit() {
@@ -108,24 +137,26 @@ public class LimitLatch {
     /**
      * Acquires a shared latch if one is available or waits for one if no shared
      * latch is current available.
+     *
      * @throws InterruptedException If the current thread is interrupted
      */
     public void countUpOrAwait() throws InterruptedException {
         if (log.isDebugEnabled()) {
-            log.debug("Counting up["+Thread.currentThread().getName()+"] latch="+getCount());
+            log.debug("Counting up[" + Thread.currentThread().getName() + "] latch=" + getCount());
         }
         sync.acquireSharedInterruptibly(1);
     }
 
     /**
      * Releases a shared latch, making it available for another thread to use.
+     *
      * @return the previous counter value
      */
     public long countDown() {
         sync.releaseShared(0);
         long result = getCount();
         if (log.isDebugEnabled()) {
-            log.debug("Counting down["+Thread.currentThread().getName()+"] latch="+result);
+            log.debug("Counting down[" + Thread.currentThread().getName() + "] latch=" + result);
         }
         return result;
     }
@@ -133,6 +164,7 @@ public class LimitLatch {
     /**
      * Releases all waiting threads and causes the {@link #limit} to be ignored
      * until {@link #reset()} is called.
+     *
      * @return <code>true</code> if release was done
      */
     public boolean releaseAll() {
@@ -142,6 +174,7 @@ public class LimitLatch {
 
     /**
      * Resets the latch and initializes the shared acquisition counter to zero.
+     *
      * @see #releaseAll()
      */
     public void reset() {
@@ -152,6 +185,7 @@ public class LimitLatch {
     /**
      * Returns <code>true</code> if there is at least one thread waiting to
      * acquire the shared lock, otherwise returns <code>false</code>.
+     *
      * @return <code>true</code> if threads are waiting
      */
     public boolean hasQueuedThreads() {
@@ -161,6 +195,7 @@ public class LimitLatch {
     /**
      * Provide access to the list of threads waiting to acquire this limited
      * shared latch.
+     *
      * @return a collection of threads
      */
     public Collection<Thread> getQueuedThreads() {

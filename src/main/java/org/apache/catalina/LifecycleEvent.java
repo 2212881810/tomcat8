@@ -32,9 +32,9 @@ public final class LifecycleEvent extends EventObject {
     /**
      * Construct a new LifecycleEvent with the specified parameters.
      *
-     * @param lifecycle Component on which this event occurred
-     * @param type Event type (required)
-     * @param data Event data (if any)
+     * @param lifecycle Component on which this event occurred 触发事件的组件
+     * @param type Event type (required)  ： 事件类型
+     * @param data Event data (if any)  ： 事件数据
      */
     public LifecycleEvent(Lifecycle lifecycle, String type, Object data) {
         super(lifecycle);

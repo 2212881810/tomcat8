@@ -30,10 +30,15 @@ import org.apache.tomcat.util.net.SSLHostConfig;
  * @author Remy Maucherat
  * @author Costin Manolache
  * @see Adapter
+ *
+ *
+ *它不是一种组件,所以不需要继承生命周期的接口,不需要那么复杂的管理
  */
 public interface ProtocolHandler {
 
     /**
+     *
+     * 适配器: 适配接口,适配类
      * Return the adapter associated with the protocol handler.
      * @return the adapter
      */
@@ -50,7 +55,7 @@ public interface ProtocolHandler {
 
     /**
      * The executor, provide access to the underlying thread pool.
-     *
+     * 执行器， 底层提供了一个线程池！！
      * @return The executor used to process requests
      */
     public Executor getExecutor();
@@ -130,10 +135,18 @@ public interface ProtocolHandler {
     public boolean isSendfileSupported();
 
 
+    /**
+     * https
+     * @param sslHostConfig
+     */
     public void addSslHostConfig(SSLHostConfig sslHostConfig);
     public SSLHostConfig[] findSslHostConfigs();
 
 
+    /**
+     * 升级协议
+     * @param upgradeProtocol
+     */
     public void addUpgradeProtocol(UpgradeProtocol upgradeProtocol);
     public UpgradeProtocol[] findUpgradeProtocols();
 }

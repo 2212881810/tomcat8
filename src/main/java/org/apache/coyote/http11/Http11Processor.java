@@ -65,6 +65,9 @@ import org.apache.tomcat.util.net.SendfileState;
 import org.apache.tomcat.util.net.SocketWrapperBase;
 import org.apache.tomcat.util.res.StringManager;
 
+/**
+ * processor ,包含了一系列的filter过滤器，读取请求体中的数据或者说是响应数据到客户端都是靠这些过滤器来完成的
+ */
 public class Http11Processor extends AbstractProcessor {
 
     private static final Log log = LogFactory.getLog(Http11Processor.class);
@@ -185,28 +188,29 @@ public class Http11Processor extends AbstractProcessor {
         super(endpoint);
         this.protocol = protocol;
 
-        httpParser = new HttpParser(protocol.getRelaxedPathChars(),
-                protocol.getRelaxedQueryChars());
+        // 创建一个http请求头的解析器
+        httpParser = new HttpParser(protocol.getRelaxedPathChars(),protocol.getRelaxedQueryChars());
 
-        inputBuffer = new Http11InputBuffer(request, protocol.getMaxHttpHeaderSize(),
-                protocol.getRejectIllegalHeader(), httpParser);
+        // 创建一个输入流buffer
+        inputBuffer = new Http11InputBuffer(request, protocol.getMaxHttpHeaderSize(),protocol.getRejectIllegalHeader(), httpParser);
         request.setInputBuffer(inputBuffer);
 
-        outputBuffer = new Http11OutputBuffer(response, protocol.getMaxHttpHeaderSize(),
-                protocol.getSendReasonPhrase());
+        outputBuffer = new Http11OutputBuffer(response, protocol.getMaxHttpHeaderSize(),protocol.getSendReasonPhrase());
         response.setOutputBuffer(outputBuffer);
 
-        // Create and add the identity filters.
+        //创建并且添加过滤器，读取请求体中的数据就是靠这个过滤器来实现的
+        // IdentityInputFilter 过滤器用于读取带有content-length类型的请求
         inputBuffer.addFilter(new IdentityInputFilter(protocol.getMaxSwallowSize()));
         outputBuffer.addFilter(new IdentityOutputFilter());
 
         // Create and add the chunked filters.
+        //创建并且添加过滤器，这个过滤器用于读取chunked类型的请求体
         inputBuffer.addFilter(new ChunkedInputFilter(protocol.getMaxTrailerSize(),
                 protocol.getAllowedTrailerHeadersInternal(), protocol.getMaxExtensionSize(),
                 protocol.getMaxSwallowSize()));
         outputBuffer.addFilter(new ChunkedOutputFilter());
 
-        // Create and add the void filters.
+        // 处理get或者head类型的请求，不带请求体
         inputBuffer.addFilter(new VoidInputFilter());
         outputBuffer.addFilter(new VoidOutputFilter());
 
@@ -217,6 +221,7 @@ public class Http11Processor extends AbstractProcessor {
         //inputBuffer.addFilter(new GzipInputFilter());
         outputBuffer.addFilter(new GzipOutputFilter());
 
+        //计算共有多个input类型的过滤器
         pluggableFilterIndex = inputBuffer.getFilters().length;
     }
 
@@ -497,7 +502,7 @@ public class Http11Processor extends AbstractProcessor {
         rp.setStage(org.apache.coyote.Constants.STAGE_PARSE);
 
         // Setting up the I/O
-        // 给这个socket绑定inputBuffer 和outputBuffer，socket中的数据会读到这个buffer中
+        // 给这个socket初始化好inputBuffer 和outputBuffer，socket中的数据会读到这个buffer中
         setSocketWrapper(socketWrapper);
 
         // Flags

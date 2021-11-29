@@ -24,6 +24,8 @@ package org.apache.tomcat.util.collections;
  * as possible with minimum garbage.
  *
  * @param <T> The type of object managed by this stack
+ *
+ *  自己实现的一个对象池，可以避免对象的重复创建
  */
 public class SynchronizedStack<T> {
 

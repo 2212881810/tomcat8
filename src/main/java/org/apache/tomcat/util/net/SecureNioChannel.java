@@ -146,6 +146,7 @@ public class SecureNioChannel extends NioChannel  {
     protected boolean flush(ByteBuffer buf) throws IOException {
         int remaining = buf.remaining();
         if (remaining > 0) {
+            // write方法就是将jvm缓冲区buf中的数据写sc中去（内核的socket缓冲区）
             return (sc.write(buf) >= remaining);
         } else {
             return true;

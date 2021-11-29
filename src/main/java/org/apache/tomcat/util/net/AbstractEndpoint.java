@@ -911,6 +911,7 @@ public abstract class AbstractEndpoint<S> {
 
     /**
      * Handling of accepted sockets.
+     *  处理接收到的socket
      */
     private Handler<S> handler = null;
 
