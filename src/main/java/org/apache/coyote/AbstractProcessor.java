@@ -50,7 +50,10 @@ public abstract class AbstractProcessor extends AbstractProcessorLight implement
     // Used to avoid useless B2C conversion on the host name.
     protected char[] hostNameC = new char[0];
 
+    // httpservletreq, httpservletresp
     protected Adapter adapter;
+
+    // 状态转换机，与异步相关
     protected final AsyncStateMachine asyncStateMachine;
     private volatile long asyncTimeout = -1;
     /*

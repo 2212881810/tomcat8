@@ -65,6 +65,8 @@ public abstract class AbstractEndpoint<S> {
 
         /**
          * Different types of socket states to react upon.
+         *
+         *这个socket 处于什么状态
          */
         public enum SocketState {
             // TODO Add a new state to the AsyncStateMachine and remove
@@ -1218,13 +1220,26 @@ public abstract class AbstractEndpoint<S> {
             if (socketWrapper == null) {
                 return false;
             }
+            // processor： 处理具体的事
+            // handler : 比processor大， 回调？ 门面！
+
+
+            /*
+                processorCache就是一个对象池，如何使用的呢？？？
+
+             */
             SocketProcessorBase<S> sc = processorCache.pop();
             if (sc == null) {
                 sc = createSocketProcessor(socketWrapper, event);
             } else {
+                // sc还是那个sc， 但是通过reset方法，就更换了sc对象中的两个属性！
                 sc.reset(socketWrapper, event);
             }
+
+
+
             Executor executor = getExecutor();
+            // dispatch 为true ,交给worker线程池去执行，否则就是poller线程去执行
             if (dispatch && executor != null) {
                 executor.execute(sc);
             } else {

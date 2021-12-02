@@ -667,6 +667,7 @@ public class NioEndpoint extends AbstractJsseEndpoint<NioChannel> {
                 }
             } else {
 
+                // keyFor方法将会返回该通道和指定selector相关的键 ！
                 final SelectionKey key = socket.getIOChannel().keyFor(socket.getPoller().getSelector());
                 try {
                     if (key == null) {
@@ -716,7 +717,7 @@ public class NioEndpoint extends AbstractJsseEndpoint<NioChannel> {
 
         private volatile boolean close = false;
         private long nextExpiration = 0;//optimize expiration handling
-
+        // 唤醒计数器
         private AtomicLong wakeupCounter = new AtomicLong(0);
 
         private volatile int keyCount = 0;
@@ -747,7 +748,18 @@ public class NioEndpoint extends AbstractJsseEndpoint<NioChannel> {
         private void addEvent(PollerEvent event) {
             // 添加
             events.offer(event);
+            //有就绪事件，wakeupCounter++
             if (wakeupCounter.incrementAndGet() == 0) {
+                /*
+                    wakeup方法，可以优雅的唤醒因为select()或者select(long)而阻塞的线程！！！！
+                    使用 wakeup( )方法将会优雅地将一个在 select( )方法中睡眠的线程唤醒
+                    调用 Selector 对象的 wakeup( )方法将使得选择器上的第一个还没有返回的选择操作立即返
+                    回。如果当前没有在进行中的选择，那么下一次对 select( )方法的一种形式的调用将立即返回
+                    总之： 调用了wakeup方法之后，可以促使select方法立即有响应结果
+                 */
+                // 此处为什么要调用wakeup?
+                // 因为调用addEvent方法时，必要会有一个感兴趣的事件(OP_READ)注册到selector选择器上（在PollerEvent.run方法中完成注册）
+                // 即然有事件注册到选择器上了，那么就可以调用wakeup方法，让原本因为调用select(n)方法处理阻塞的线程立即醒过来！！！！
                 selector.wakeup();
             }
         }
@@ -909,6 +921,7 @@ public class NioEndpoint extends AbstractJsseEndpoint<NioChannel> {
         @Override
         public void run() {
             // Loop until destroy() is called
+            // 一直循环，直到调用了destroy方法
             while (true) {
 
                 boolean hasEvents = false;
@@ -917,17 +930,25 @@ public class NioEndpoint extends AbstractJsseEndpoint<NioChannel> {
                     if (!close) {
                         // 获取事件！！！！
                         hasEvents = events();
-                        if (wakeupCounter.getAndSet(-1) > 0) {
+
+                        if (wakeupCounter.getAndSet(-1) > 0) { // 说明已经有事件注册到选择器上，可以直接调用selectNow方法立马获取
                             // If we are here, means we have other stuff to do
                             // Do a non blocking select
+                            // 不阻塞 ，返回准备新绪的channel个数，如果没有就结的返回0
+                            //selectNow()方法执行就绪检查过程，但不阻塞。如果当前没有通道就绪，它将立即返回 0
                             keyCount = selector.selectNow();
                         } else {
+                            // 阻塞操作
+                            // select方法的返回值不是已经准备好的通道的总数，而是从上一个select方法调用之后进入就绪状态的通道的数量！！！
+                            // 假设selector.select(selectorTimeout)阻塞了，因为调用了selector.wakeup()方法，可以立马唤醒！
                             keyCount = selector.select(selectorTimeout);
                         }
+                        // 重置为0，表明暂时无就绪的事件
                         wakeupCounter.set(0);
                     }
-                    if (close) {
+                    if (close) {  //
                         events();
+                        // 无条件进入timeout执行逻辑
                         timeout(0, false);
                         try {
                             selector.close();
@@ -941,8 +962,9 @@ public class NioEndpoint extends AbstractJsseEndpoint<NioChannel> {
                     log.error("", x);
                     continue;
                 }
-                // Either we timed out or we woke up, process events first
+                //keyCount==0,说明前面调用selector.selectXX()方法没有获取到就绪的事件通道
                 if (keyCount == 0) {
+                    // 相当于再调用一次events()
                     hasEvents = (hasEvents | events());
                 }
 
@@ -957,12 +979,12 @@ public class NioEndpoint extends AbstractJsseEndpoint<NioChannel> {
                     // Attachment may be null if another thread has called
                     // cancelledKey()
                     if (socketWrapper != null) {
-                        // 事件处理方式
+                        // 执行已就绪的事件通道
                         processKey(sk, socketWrapper);
                     }
                 }
 
-                // Process timeouts
+                // 处理超时事件
                 timeout(keyCount, hasEvents);
             }
 
@@ -973,13 +995,23 @@ public class NioEndpoint extends AbstractJsseEndpoint<NioChannel> {
             try {
                 if (close) {
                     cancelledKey(sk);
-                } else if (sk.isValid() && attachment != null) {
+
+
+                } else if (sk.isValid() && attachment != null) {  // 如果sk有效
+                    // sk有效是指一个SelectionKey被创建好，直到key被取消，channel被关闭，或者selector被关闭之后才会变成无效
+
                     //如果是读事件和写事件
                     if (sk.isReadable() || sk.isWritable()) {
+
                         if (attachment.getSendfileData() != null) {
+
+                            // 使用sendfile机制传输数据
                             processSendfile(sk, attachment, false);
+
+
                         } else {
-                            // 其实没看懂这个方法有啥用
+                            // 取消注册，因为当前socket会被当前线程来处理，取消之后就不会被其它线程去处理了
+                            // 避免多个线程同时处理相同状态的事件集
                             unreg(sk, attachment, sk.readyOps());
                             boolean closeSocket = false;
                             // Read goes before write
@@ -1134,6 +1166,13 @@ public class NioEndpoint extends AbstractJsseEndpoint<NioChannel> {
             socketWrapper.interestOps(intops);
         }
 
+
+        /**
+         * 遍历selector的键值集，判断读写超时，并做相应的处理
+         *
+         * @param keyCount
+         * @param hasEvents
+         */
         protected void timeout(int keyCount, boolean hasEvents) {
             long now = System.currentTimeMillis();
             // This method is called on every loop of the Poller. Don't process
@@ -1148,31 +1187,37 @@ public class NioEndpoint extends AbstractJsseEndpoint<NioChannel> {
             }
             int keycount = 0;
             try {
+                // selector中有3个键集合，所有的key集合，就绪集合，取消集合
+                // 获取所有键值集合
                 for (SelectionKey key : selector.keys()) {
                     keycount++;
                     try {
                         NioSocketWrapper ka = (NioSocketWrapper) key.attachment();
-                        if (ka == null) {
+
+                        if (ka == null) {// 非法状态
                             cancelledKey(key); //we don't support any keys without attachments
-                        } else if (close) {
+                        } else if (close) {// 关闭状态
                             key.interestOps(0);
                             ka.interestOps(0); //avoid duplicate stop calls
                             processKey(key, ka);
                         } else if ((ka.interestOps() & SelectionKey.OP_READ) == SelectionKey.OP_READ || (ka.interestOps() & SelectionKey.OP_WRITE) == SelectionKey.OP_WRITE) {
+                            // 是否超时
                             boolean isTimedOut = false;
+
                             // Check for read timeout
                             if ((ka.interestOps() & SelectionKey.OP_READ) == SelectionKey.OP_READ) {
                                 long delta = now - ka.getLastRead();
                                 long timeout = ka.getReadTimeout();
                                 isTimedOut = timeout > 0 && delta > timeout;
                             }
+
                             // Check for write timeout
                             if (!isTimedOut && (ka.interestOps() & SelectionKey.OP_WRITE) == SelectionKey.OP_WRITE) {
                                 long delta = now - ka.getLastWrite();
                                 long timeout = ka.getWriteTimeout();
                                 isTimedOut = timeout > 0 && delta > timeout;
                             }
-                            if (isTimedOut) {
+                            if (isTimedOut) { // 超时之后的操作
                                 key.interestOps(0);
                                 ka.interestOps(0); //avoid duplicate timeout calls
                                 ka.setError(new SocketTimeoutException());
@@ -1492,6 +1537,7 @@ public class NioEndpoint extends AbstractJsseEndpoint<NioChannel> {
             if (log.isDebugEnabled()) {
                 log.debug(sm.getString("endpoint.debug.registerRead", this));
             }
+
             getPoller().add(getSocket(), SelectionKey.OP_READ);
         }
 

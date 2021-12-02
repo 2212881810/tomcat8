@@ -21,6 +21,8 @@ package org.apache.tomcat.util.net;
  * data from an incoming connection. Application created threads are not
  * container threads and neither are threads taken from the container thread
  * pool to execute AsyncContext.start(Runnable).
+ *
+ * 标记容器已经分配此线程去处理连接请求数据了....
  */
 public class ContainerThreadMarker {
 

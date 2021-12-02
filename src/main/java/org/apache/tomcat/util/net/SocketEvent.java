@@ -20,11 +20,20 @@ package org.apache.tomcat.util.net;
  * Defines events that occur per socket that require further processing by the
  * container. Usually these events are triggered by the socket implementation
  * but they may be triggered by the container.
+ * 通常这些事件都会被socket 的实现触发 ，但是他们也可能被容器触发
+ *
+ *  static final 与枚举的区别： 由于每举类中每一个枚举都是一个对象（16个字节）， static final 4个字节
+ *
+ *
+ *  这个类指示如何操作socket
+ *
+ *  名字叫SocketEvent ,其实就是指示socket的状态
  */
 public enum SocketEvent {
 
     /**
      * Data is available to be read.
+     * （16个字节 ）
      */
     OPEN_READ,
 

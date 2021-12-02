@@ -129,7 +129,9 @@ public class CoyoteAdapter implements Adapter {
     public boolean asyncDispatch(org.apache.coyote.Request req, org.apache.coyote.Response res,
             SocketEvent status) throws Exception {
 
+        // 实现了HttpServletRequest
         Request request = (Request) req.getNote(ADAPTER_NOTES);
+        // 实现了HttpServletResponse
         Response response = (Response) res.getNote(ADAPTER_NOTES);
 
         if (request == null) {

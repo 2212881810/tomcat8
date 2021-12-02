@@ -1241,6 +1241,7 @@ public abstract class AbstractHttp11Protocol<S> extends AbstractProtocol<S> {
     protected Processor createProcessor() {
         // 创建processor实例
         Http11Processor processor = new Http11Processor(this, getEndpoint());
+        // adapter: 将connector连接的req和resp 适配成 http req 和 http resp
         processor.setAdapter(getAdapter());
 
         processor.setMaxKeepAliveRequests(getMaxKeepAliveRequests());
