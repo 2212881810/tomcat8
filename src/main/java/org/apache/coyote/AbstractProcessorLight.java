@@ -167,6 +167,11 @@ public abstract class AbstractProcessorLight implements Processor {
      * request type may change during processing which may result in one or more
      * calls to {@link #dispatch(SocketEvent)}. Requests may be pipe-lined.
      *
+     *
+     * 服务于一个标准的http请求，这个方法被调用在请一个新的请求来了，或者是解析了一部分http 请求头之后。
+     * 一旦请求头被读完，这个方法就不会再调用了，直到再来一个新的http请求。
+     *
+     * 简而言之，该方法在处理读请求数据时被调用。
      * @param socketWrapper The connection to process
      *
      * @return The state the caller should put the socket in when this method

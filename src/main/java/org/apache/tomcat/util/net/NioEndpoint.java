@@ -1412,6 +1412,7 @@ public class NioEndpoint extends AbstractJsseEndpoint<NioChannel> {
         @Override
         public int read(boolean block, ByteBuffer to) throws IOException {
             int nRead = populateReadBuffer(to);
+
             if (nRead > 0) {
                 return nRead;
                 /*

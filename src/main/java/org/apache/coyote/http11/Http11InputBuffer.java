@@ -364,12 +364,14 @@ public class Http11InputBuffer implements InputBuffer, ApplicationBufferHandler 
         if (parsingRequestLinePhase < 2) {
             do {
                 // Read new bytes if needed
+                // position只可能等于limit,不可能大于limit
                 if (byteBuffer.position() >= byteBuffer.limit()) {
                     if (keptAlive) {
                         // Haven't read any request data yet so use the keep-alive
                         // timeout.
                         wrapper.setReadTimeout(wrapper.getEndpoint().getKeepAliveTimeout());
                     }
+                    // 从socket读缓冲区读取数据到tomcat架构中自定义的一个bytebuffer缓冲区
                     if (!fill(false)) {
                         // A read is pending, so no longer in initial state
                         parsingRequestLinePhase = 1;
@@ -412,6 +414,7 @@ public class Http11InputBuffer implements InputBuffer, ApplicationBufferHandler 
             boolean space = false;
             while (!space) {
                 // Read new bytes if needed
+                // position == limit时，说明byteBuffer中的数据读完了，需要再次从socket读缓冲区读取数据到byteBuffer
                 if (byteBuffer.position() >= byteBuffer.limit()) {
                     if (!fill(false)) {
                         return false;
@@ -747,10 +750,13 @@ public class Http11InputBuffer implements InputBuffer, ApplicationBufferHandler 
     void init(SocketWrapperBase<?> socketWrapper) {
 
         wrapper = socketWrapper;
+        // 给socketWrapper设置this ,即是设置应用层缓冲区(http缓冲区)
         wrapper.setAppReadBufHandler(this);
 
         int bufLength = headerBufferSize + wrapper.getSocketBufferHandler().getReadBuffer().capacity();
+
         if (byteBuffer == null || byteBuffer.capacity() < bufLength) {
+            // 分配一个读缓存区
             byteBuffer = ByteBuffer.allocate(bufLength);
             byteBuffer.position(0).limit(0);
         }
@@ -790,6 +796,13 @@ public class Http11InputBuffer implements InputBuffer, ApplicationBufferHandler 
                 byteBuffer.position(byteBuffer.limit());
             }
             byteBuffer.limit(byteBuffer.capacity());
+
+
+
+
+            // 从wrapper中读取数据到byteBuffer
+            // readBuffer ---> byteBuffer
+            // socket读缓冲区 ---> tomcat搞的一个读缓冲区
             nRead = wrapper.read(block, byteBuffer);
         } finally {
             // Ensure that the buffer limit and position are returned to a

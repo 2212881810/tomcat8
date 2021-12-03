@@ -1466,7 +1466,9 @@ public abstract class SocketWrapperBase<E> {
         return max;
     }
 
+    // 将from中的数据读到to中
     protected static int transfer(ByteBuffer from, ByteBuffer to) {
+        //
         int max = Math.min(from.remaining(), to.remaining());
         if (max > 0) {
             int fromLimit = from.limit();

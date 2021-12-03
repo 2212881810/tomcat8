@@ -67,6 +67,8 @@ public abstract class AbstractProcessor extends AbstractProcessorLight implement
      */
     private volatile long asyncTimeoutGeneration = 0;
     protected final AbstractEndpoint<?> endpoint;
+    // final变量，要么在定义的时候初始化，要么在构造器中进行初始化.为什么？
+
     protected final Request request;
     protected final Response response;
     protected volatile SocketWrapperBase<?> socketWrapper = null;
@@ -81,6 +83,7 @@ public abstract class AbstractProcessor extends AbstractProcessorLight implement
     protected final UserDataHelper userDataHelper;
 
     public AbstractProcessor(AbstractEndpoint<?> endpoint) {
+        // this能调用构造器的原因，是因为this就是个指针
         this(endpoint, new Request(), new Response());
     }
 

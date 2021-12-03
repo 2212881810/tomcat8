@@ -477,14 +477,15 @@ public class Http11Processor extends AbstractProcessor {
 
     @Override
     public SocketState service(SocketWrapperBase<?> socketWrapper) throws IOException {
+        // RequestInfo 就是个包装器，所有对它的操作，底层都是操作coyote.Request的操作
         RequestInfo rp = request.getRequestProcessor();
 
 
         //由New阶段 转变成 开始解析 阶段
         rp.setStage(org.apache.coyote.Constants.STAGE_PARSE);
 
-        // Setting up the I/O
-        // 给这个socket初始化好inputBuffer 和outputBuffer，socket中的数据会读到这个buffer中
+        // Setting up the I/O 设置IO
+        // 初始化读缓冲区，后面会调用fill方法，将读缓冲区中的数据读到inputBuffer中
         setSocketWrapper(socketWrapper);
 
         // Flags
@@ -498,7 +499,8 @@ public class Http11Processor extends AbstractProcessor {
 
             // 解析请求头
             try {
-                // 解析请求行， 其实就是从inputBuffer中读数据
+                // 解析请求行，从socket的读缓冲区读取数据到 read buffer【inputBuffer对象中属性】,
+                // 即是将内核缓冲区的数据读到了应用层的缓冲区
                 if (!inputBuffer.parseRequestLine(keptAlive)) {
                     if (inputBuffer.getParsingRequestLinePhase() == -1) {
                         return SocketState.UPGRADING;
@@ -554,12 +556,12 @@ public class Http11Processor extends AbstractProcessor {
                             log.debug(message, t);
                     }
                 }
-                // 400 - Bad Request
+                // 400 - Bad Request---> 解析请求头，然后不符合规范，抛出了异常
                 response.setStatus(400);
                 setErrorState(ErrorState.CLOSE_CLEAN, t);
             }
 
-            // Has an upgrade been requested?
+            // Has an upgrade been requested?   协议升级
             if (isConnectionToken(request.getMimeHeaders(), "upgrade")) {
                 // Check the protocol
                 String requestedProtocol = request.getHeader("Upgrade");
@@ -585,6 +587,7 @@ public class Http11Processor extends AbstractProcessor {
 
             if (getErrorState().isIoAllowed()) {
                 // Setting up filters, and parse some request headers
+                // 设置filters, 并且解析请求头
                 rp.setStage(org.apache.coyote.Constants.STAGE_PREPARE);
                 try {
                     prepareRequest();
@@ -609,6 +612,11 @@ public class Http11Processor extends AbstractProcessor {
             if (getErrorState().isIoAllowed()) {
                 try {
                     rp.setStage(org.apache.coyote.Constants.STAGE_SERVICE);
+
+
+
+
+                    // 这里流程正式进入engine层了
                     getAdapter().service(request, response);
                     // Handle when the response was committed before a serious
                     // error occurred.  Throwing a ServletException should both
@@ -708,6 +716,7 @@ public class Http11Processor extends AbstractProcessor {
 
     @Override
     protected final void setSocketWrapper(SocketWrapperBase<?> socketWrapper) {
+        // SocketWrapper 包装了所有对socket的操作
         super.setSocketWrapper(socketWrapper);
         inputBuffer.init(socketWrapper);
         outputBuffer.init(socketWrapper);
@@ -983,6 +992,7 @@ public class Http11Processor extends AbstractProcessor {
         }
 
         // Input filter setup
+        // 设置输入filter
         InputFilter[] inputFilters = inputBuffer.getFilters();
 
         // Parse transfer-encoding header
