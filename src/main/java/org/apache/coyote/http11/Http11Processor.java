@@ -608,7 +608,11 @@ public class Http11Processor extends AbstractProcessor {
                 keepAlive = false;
             }
 
-            // Process the request in the adapter
+
+
+            // Process the request in the adapter 通过adapter去处理request
+
+            //  Error state for the request/response currently being processed. 此处的errorstate表示请求响应正在被处理
             if (getErrorState().isIoAllowed()) {
                 try {
                     rp.setStage(org.apache.coyote.Constants.STAGE_SERVICE);
@@ -616,7 +620,7 @@ public class Http11Processor extends AbstractProcessor {
 
 
 
-                    // 这里流程正式进入engine层了
+                    // 这里流程正式进入engine层了， 记住此时的request和response都是coyote包下的   /kaɪˈoʊti; ˈkaɪoʊt/
                     getAdapter().service(request, response);
                     // Handle when the response was committed before a serious
                     // error occurred.  Throwing a ServletException should both

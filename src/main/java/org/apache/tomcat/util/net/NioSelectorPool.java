@@ -287,6 +287,7 @@ public class NioSelectorPool {
             while (!timedout) {
                 int cnt = 0;
                 if (keycount > 0) { //only read if we were registered for a read
+                    // 从socket内核缓冲区读取数据到buf
                     cnt = socket.read(buf);
                     if (cnt == -1) {
                         if (read == 0) {

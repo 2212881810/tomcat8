@@ -81,6 +81,8 @@ public class Http11InputBuffer implements InputBuffer, ApplicationBufferHandler 
 
     /**
      * The read buffer.
+     *
+     *
      */
     private ByteBuffer byteBuffer;
 
@@ -797,12 +799,8 @@ public class Http11InputBuffer implements InputBuffer, ApplicationBufferHandler 
             }
             byteBuffer.limit(byteBuffer.capacity());
 
-
-
-
-            // 从wrapper中读取数据到byteBuffer
-            // readBuffer ---> byteBuffer
-            // socket读缓冲区 ---> tomcat搞的一个读缓冲区
+            // wrapper包装了socket ,read方法底层是将socket内核缓冲区中的数据读到bytebuffer中，此处的byteBuffer就是一个读缓冲区
+            // 即是将数据从内核读到用户空间（tomcat中）
             nRead = wrapper.read(block, byteBuffer);
         } finally {
             // Ensure that the buffer limit and position are returned to a

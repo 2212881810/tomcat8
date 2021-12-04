@@ -1411,6 +1411,7 @@ public class NioEndpoint extends AbstractJsseEndpoint<NioChannel> {
 
         @Override
         public int read(boolean block, ByteBuffer to) throws IOException {
+            // 将数据从socketBufferHandler中的readBuffer读到to
             int nRead = populateReadBuffer(to);
 
             if (nRead > 0) {
@@ -1428,13 +1429,16 @@ public class NioEndpoint extends AbstractJsseEndpoint<NioChannel> {
             int limit = socketBufferHandler.getReadBuffer().capacity();
             if (to.remaining() >= limit) {
                 to.limit(to.position() + limit);
+                // 填充读缓冲区，即是将socket内核缓冲区中的数据读出来，放到to这个变量中
+                // 如果走这个if分支，就不会经过 socketBufferHandler 的readBuffer
                 nRead = fillReadBuffer(block, to);
                 if (log.isDebugEnabled()) {
                     log.debug("Socket: [" + this + "], Read direct from socket: [" + nRead + "]");
                 }
                 updateLastRead();
             } else {
-                // Fill the read buffer as best we can.
+                // Fill the read buffer as best we can. 最好是先填充read buffer ，此处的read buff是 SocketBufferHandler 类中的readBuffer
+                // 1. 先将socket内核缓冲区中的数据读到socketBufferHandler中的readBuffer中
                 nRead = fillReadBuffer(block);
                 if (log.isDebugEnabled()) {
                     log.debug("Socket: [" + this + "], Read into buffer: [" + nRead + "]");
@@ -1444,6 +1448,7 @@ public class NioEndpoint extends AbstractJsseEndpoint<NioChannel> {
                 // Fill as much of the remaining byte array as possible with the
                 // data that was just read
                 if (nRead > 0) {
+                    // 2.再将SocketBufferHandler中的readBuffer数据通地transfer方法读到 Http11InputBuffer类中的byteBuffer中
                     nRead = populateReadBuffer(to);
                 }
             }
@@ -1485,6 +1490,7 @@ public class NioEndpoint extends AbstractJsseEndpoint<NioChannel> {
                     if (att == null) {
                         throw new IOException("Key must be cancelled.");
                     }
+                    // 从socket的内核缓冲区将数据读到to所代表的变量缓存中，to可能是SocketBufferHandler中的readBuffer,也可能是Http11InputBuffer中的byteBuffer
                     nRead = pool.read(to, channel, selector, att.getReadTimeout());
                 } finally {
                     if (selector != null) {
