@@ -69,7 +69,7 @@ public final class ApplicationFilterChain implements FilterChain {
     // ----------------------------------------------------- Instance Variables
 
     /**
-     * Filters.
+     * Filters. 通过这个数组来存储所有的过滤器filter
      */
     private ApplicationFilterConfig[] filters = new ApplicationFilterConfig[0];
 
@@ -89,6 +89,7 @@ public final class ApplicationFilterChain implements FilterChain {
 
     /**
      * The servlet instance to be executed by this chain.
+     * 这个就是我们实现的servlet，在所有的过滤器filter调用完之后，才会调用servlet的service方法
      */
     private Servlet servlet = null;
 
@@ -172,6 +173,7 @@ public final class ApplicationFilterChain implements FilterChain {
         throws IOException, ServletException {
 
         // Call the next filter if there is one
+        // 调用app过滤器链上的所有filter
         if (pos < n) {
             ApplicationFilterConfig filterConfig = filters[pos++];
             try {
@@ -203,6 +205,8 @@ public final class ApplicationFilterChain implements FilterChain {
         }
 
         // We fell off the end of the chain -- call the servlet instance
+        // 调用servlet实例的service
+        System.out.println("调用完filter.doFilter方法之后,准备调用servlet.service方法");
         try {
             if (ApplicationDispatcher.WRAP_SAME_OBJECT) {
                 lastServicedRequest.set(request);

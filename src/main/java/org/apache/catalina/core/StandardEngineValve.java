@@ -75,6 +75,7 @@ final class StandardEngineValve extends ValveBase {
         }
 
         // Ask this Host to process this request
+        // 由engineValue调用hostValue
         host.getPipeline().getFirst().invoke(request, response);
     }
 }

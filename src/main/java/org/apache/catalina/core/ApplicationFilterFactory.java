@@ -76,7 +76,7 @@ public final class ApplicationFilterFactory {
             // Request dispatcher in use
             filterChain = new ApplicationFilterChain();
         }
-
+        //将servlet设置到filterChain上，以便于将filterChain上所有的filter执行完毕之后，再执行此servlet
         filterChain.setServlet(servlet);
         filterChain.setServletSupportsAsync(wrapper.isAsyncSupported());
 

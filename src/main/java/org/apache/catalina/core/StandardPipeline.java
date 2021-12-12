@@ -69,7 +69,9 @@ public class StandardPipeline extends LifecycleBase implements Pipeline {
     /**
      * Construct a new StandardPipeline instance that is associated with the
      * specified Container.
-     *
+     * 1. 创建StandardEngine这个容器的时候调用一次
+     * 2. 创建StandardHost这个容器的时候调用一次
+     * 3. 创建StandardContext这个容器的时候调用一次
      * @param container The container we should be associated with
      */
     public StandardPipeline(Container container) {
@@ -85,18 +87,22 @@ public class StandardPipeline extends LifecycleBase implements Pipeline {
 
     /**
      * The basic Valve (if any) associated with this Pipeline.
+     *
+     * pipeline上最后一个value
      */
     protected Valve basic = null;
 
 
     /**
      * The Container with which this Pipeline is associated.
+     * pipeline关联的容器
      */
     protected Container container = null;
 
 
     /**
      * The first valve associated with this Pipeline.
+     * pipeline上的第一个value
      */
     protected Valve first = null;
 

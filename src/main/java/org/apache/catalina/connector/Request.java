@@ -134,8 +134,10 @@ public class Request implements HttpServletRequest {
     // ----------------------------------------------------------- Constructors
 
     public Request() {
+        // 创建数组
         formats = new SimpleDateFormat[formatsTemplate.length];
         for(int i = 0; i < formats.length; i++) {
+            // 数组元素赋值
             formats[i] = (SimpleDateFormat) formatsTemplate[i].clone();
         }
     }
