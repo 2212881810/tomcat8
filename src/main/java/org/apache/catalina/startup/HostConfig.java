@@ -82,6 +82,10 @@ import org.apache.tomcat.util.res.StringManager;
  */
 public class HostConfig implements LifecycleListener {
 
+
+    public HostConfig() {
+        System.out.println("创建HostConfig!");
+    }
     private static final Log log = LogFactory.getLog(HostConfig.class);
 
     /**
@@ -1528,7 +1532,7 @@ public class HostConfig implements LifecycleListener {
 
 
     public void beforeStart() {
-        if (host.getCreateDirs()) {
+        if (host.getCreateDirs()) { // 默认为false
             File[] dirs = new File[]{host.getAppBaseFile(), host.getConfigBaseFile()};
             for (File dir : dirs) {
                 if (!dir.mkdirs() && !dir.isDirectory()) {

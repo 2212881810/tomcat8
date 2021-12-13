@@ -114,12 +114,12 @@ Host.addChild(context)---> addChildInternal(context)
 
 
 
-Tomcat的四大容器
+Tomcat中的四种servlet容器
 
 Engine： Catalina的整个engine,包含Host或者Context
 Host:    多个Context组成的虚拟Host
-Context: 一个ServletContext(web程序),这个web程序包含一个或多个Wrapper
-Wrapper：一个独立的servlet，如果实现了SingleThreadModel，可以表示多个Servlet实例
+Context: 一个具体web应用程序 ，包含一个或多个Wrapper
+Wrapper：一个具体的servlet定义，如果实现了SingleThreadModel，可以表示多个Servlet实例
 
 Engine和Host是在Catalina的load方法中完成实例化的
 Context和Wrapper是在Catalina的start方法中完成实例化的
@@ -138,4 +138,36 @@ Lifecycle.java主要api如下：
 4. destroy()
 5. addLifecycleListener(LifecycleListener listener);
 6. LifecycleListener[] findLifecycleListeners();
+
 Container.java 继承了Lifecycle.java接口
+
+
+// http11是这样的：
+Connector---> ProtocolHandler ---> ConnectionHandler ---> Processor
+Connector:连接器
+ProtocolHandler: 协议处理器
+ConnectionHandler:连接处理器
+Processor: 套接字处理器
+
+tomcat的部署流程：
+1. tomcat的容器组件在调用startInternal方法时，会找到当前组件的child容器组件，
+	然后通过startStopExecutor线程去异步的调用child容器的start生命周期方法;
+2. 在start方法中，会根据组件的当前生命周期状态，执行相应的方法和事件操作，
+	如当前组件是NEW状态，即会调用init方法；
+3. 我们tomcat部署web应用来举例；
+	Engine容器在调用startInternal方法时，会找到它的child容器组件Host,然后就会通过
+	startStopExecutor线程去执行Host容器生命周期方法start，在start方法中，通过组件的状态
+	判断，执行init方法。 在执行init方法时，就会调用setStateInternal方法并执行相应的生命事件，
+	此时的事件就是HostConfig事件，即调用HostConfig.lifecycleEvent方法，然后调用start方法，
+	完成web应用的部署操作；
+
+
+
+
+Engine容器对应的事件EngineConfig : 基本上是啥事没干
+Host容器对应的事件HostConfig： 部署web应用
+Context容器对应的事件ContextConfig: 也是复杂了一批
+
+
+
+
